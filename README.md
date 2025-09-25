@@ -55,7 +55,7 @@ Posts
  - GET /posts – Get all posts
  - 🗄️ Database Schema (Simplified)
 
-```
+```bash 
  CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT,
@@ -81,8 +81,8 @@ CREATE TABLE IF NOT EXISTS friendships (
     updated_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ
 );
-
 ```
+
 🐳 Deployment
 
 Push your image to DockerHub:
