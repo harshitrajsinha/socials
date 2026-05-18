@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"log"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"github.com/joho/godotenv"
 )
 
 var DB *gorm.DB
@@ -15,8 +17,25 @@ func Client() *gorm.DB {
 	return DB
 }
 
+func loadDataToDatabase(dbClient *gorm.DB, filename string) error {
+
+	// Read file content
+	sqlFile, err := os.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	// Execute file content (queries)
+	result := dbClient.Exec(string(sqlFile))
+	if result.Error != nil {
+	panic(result.Error)
+}
+	return nil
+}
+
 // Connect opens the DB and waits for it to be ready
-func Connect() {
+func Connect(sqlfile string) {
+		_ = godotenv.Load()
 	dsn := os.Getenv("DATABASE_DSN")
 	time.Sleep(2 * time.Second)
 	if dsn == "" {
@@ -50,6 +69,12 @@ func Connect() {
 		// Success
 		DB = db
 		fmt.Println("Successfully Connected to Postgres - Database🧑🏼‍💻")
+		err = loadDataToDatabase(db, sqlfile)
+	if err != nil {
+		panic(err)
+	} else {
+		log.Println("SQL file executed successfully!")
+	}
 		return
 	}
 

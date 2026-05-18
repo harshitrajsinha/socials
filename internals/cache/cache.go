@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/joho/godotenv"
 )
 
 var cache *redis.Client
@@ -16,6 +17,7 @@ func Client () *redis.Client {
 }
 
 func Connect(){
+	_ = godotenv.Load()
 	ctx := context.Background()
 	redisURL := os.Getenv("REDIS_URL")
 	if redisURL == "" {

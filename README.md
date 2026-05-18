@@ -97,3 +97,9 @@ docker push <dockerhub-username>/social-backend
 
 **  Contributing **
 Contributions welcome! Fork, branch, and PR.
+
+
+
+docker run --name database -p 5432:5432 -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=secretpassword123 -e POSTGRES_DB=pgdb  postgres:14.23-alpine
+
+docker run --name redis -p 6379:6379 redis:alpine3.23

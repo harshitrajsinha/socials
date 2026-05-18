@@ -9,7 +9,8 @@ import (
 )
 
 func Setup() {
-	database.Connect()
+	var sqlSchemaFile string = "project/init/01_tables.sql"
+	database.Connect(sqlSchemaFile)
 	cache.Connect()
 	notifications.InitNotificationsSystem()
 	notifications.Hydrate()
