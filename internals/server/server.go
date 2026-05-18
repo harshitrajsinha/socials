@@ -17,7 +17,7 @@ func New() *fiber.App {
 		})
 
 
-		app.Get("/", func (c *fiber.Ctx) error {
+		app.Get("/health", func (c *fiber.Ctx) error {
 			return c.Status(fiber.StatusOK).JSON(fiber.Map{"response": "server is working"})
 		})
 
