@@ -16,6 +16,11 @@ func New() *fiber.App {
 			BodyLimit:    10 * 1024 * 1024,
 		})
 
+
+		app.Get("/", func (c *fiber.Ctx) error {
+			return c.Status(fiber.StatusOK).JSON(fiber.Map{"response": "server is working"})
+		})
+
 		// Middlewares
 		app.Use(recover.New())
 		app.Use(logger.New())

@@ -24,7 +24,7 @@ Designed for learning and scalability — fully containerized with Docker & Dock
 ├── models/             # Database models
 ├── routes/             # API routes
 ├── utils/              # Helpers & utilities
-├── init/               # Database migrations/init scripts
+├── init_db_table/               # Database migrations/init scripts
 ├── docker-compose.yaml # Multi-service setup
 ├── Dockerfile          # Go app container
 ├── go.mod              # Go dependencies
@@ -100,6 +100,6 @@ Contributions welcome! Fork, branch, and PR.
 
 
 
-docker run --name database -p 5432:5432 -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=secretpassword123 -e POSTGRES_DB=pgdb  postgres:14.23-alpine
+docker run --name database -p 5432:5432 -e POSTGRES_USER=<user-name> -e POSTGRES_PASSWORD=<password> -e POSTGRES_DB=<db-name>  postgres:14.23-alpine
 
 docker run --name redis -p 6379:6379 redis:alpine3.23

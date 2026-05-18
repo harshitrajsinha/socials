@@ -9,6 +9,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"github.com/joho/godotenv"
+	"project/init_db_table"
 )
 
 var DB *gorm.DB
@@ -20,22 +21,21 @@ func Client() *gorm.DB {
 func loadDataToDatabase(dbClient *gorm.DB, filename string) error {
 
 	// Read file content
-	sqlFile, err := os.ReadFile(filename)
-	if err != nil {
-		return err
+	sqlFile, err := init_db_table.LoadFile(filename)
+	if err != nil{
+		panic("Error initializing sql file " + filename + err.Error())
 	}
-
 	// Execute file content (queries)
-	result := dbClient.Exec(string(sqlFile))
+	result := dbClient.Exec((sqlFile))
 	if result.Error != nil {
-	panic(result.Error)
-}
+		panic(result.Error)
+	}
 	return nil
 }
 
 // Connect opens the DB and waits for it to be ready
-func Connect(sqlfile string) {
-		_ = godotenv.Load()
+func Connect() {
+	_ = godotenv.Load()
 	dsn := os.Getenv("DATABASE_DSN")
 	time.Sleep(2 * time.Second)
 	if dsn == "" {
@@ -69,12 +69,16 @@ func Connect(sqlfile string) {
 		// Success
 		DB = db
 		fmt.Println("Successfully Connected to Postgres - Database🧑🏼‍💻")
-		err = loadDataToDatabase(db, sqlfile)
-	if err != nil {
-		panic(err)
-	} else {
-		log.Println("SQL file executed successfully!")
-	}
+
+		err = loadDataToDatabase(db, "00_extensions.sql")
+		if err == nil{
+			err = loadDataToDatabase(db, "01_tables.sql")
+		}
+		if err != nil {
+			panic(err)
+		} else {
+			log.Println("SQL file executed successfully!")
+		}
 		return
 	}
 
