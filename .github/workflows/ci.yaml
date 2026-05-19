@@ -78,7 +78,7 @@ jobs:
 
 
   image-build:
-    needs: [secret-scans, vulnerability-scan]
+    needs: [secret-scans, vulnerability-scan] # If this job requires all above security scans to pass, better to put them in one job. If any could be avoided (like linting in this case, then put it in a separate job)
     runs-on: ubuntu-latest
 
     env:
@@ -115,6 +115,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} # with block does not expand shell variable => requires env
           only-severities: critical
           exit-code: true
+          output: vulns.report
           # sarif-file: sarif.output.json
           # summary: true
 
@@ -123,6 +124,13 @@ jobs:
       #   with:
       #     sarif_file: sarif.output.json
       
+      - name: Upload vulnerability report
+        if: always()                        # Allows this step to run even if pipeline has to exit bcz 'critical' vulnerability has been found by docker scout in above step
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-scout-report
+          path: vulns.report
+
       # - name: Push image
       #   run: |
       #     docker push $IMAGE_NAME:$IMAGE_TAG
