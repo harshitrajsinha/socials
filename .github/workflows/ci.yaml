@@ -29,8 +29,8 @@ jobs:
 
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_GITHUB_TOKEN }}
+        # env:
+        #   GITHUB_TOKEN: ${{ secrets.REPO_GITHUB_TOKEN }}
 
   linting:
     runs-on: ubuntu-latest
@@ -46,6 +46,9 @@ jobs:
 
       - name: Download dependencies
         run: go mod download
+      
+      - name: Build
+        run: go build ./...
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
