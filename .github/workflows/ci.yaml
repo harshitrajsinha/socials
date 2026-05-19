@@ -13,7 +13,7 @@ permissions:
 
 jobs:
 
-  secret-scans:
+  security-scan:
     runs-on: ubuntu-latest
 
     steps:
@@ -28,10 +28,15 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      - name: Run Gitleaks
+      - name: Run Gitleaks for secret scan
         uses: gitleaks/gitleaks-action@v2
         # env:
         #   GITHUB_TOKEN: ${{ secrets.REPO_GITHUB_TOKEN }}
+
+      - name: Run govulncheck for vulnerability scan
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
 
   linting:
     runs-on: ubuntu-latest
@@ -56,29 +61,8 @@ jobs:
         with:
           version: v1.56.2
 
-  vulnerability-scan:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Setup Go 1.25
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.25'
-
-      - name: Download dependencies
-        run: go mod download
-
-      - name: Run govulncheck
-        run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
-          govulncheck ./...
-
-
-  image-build:
-    needs: [secret-scans, vulnerability-scan] # If this job requires all above security scans to pass, better to put them in one job. If any could be avoided (like linting in this case, then put it in a separate job)
+  docker-image-pipepline:
+    needs: [security-scan] # If this job requires all above security scans to pass, better to put them in one job. If any could be avoided (like linting in this case, then put it in a separate job)
     runs-on: ubuntu-latest
 
     env:
@@ -115,22 +99,22 @@ jobs:
           image: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} # with block does not expand shell variable => requires env
           only-severities: critical
           exit-code: true
-          output: vulns.report
-          # sarif-file: sarif.output.json
-          # summary: true
+          sarif-file: sarif.output.json
+          summary: true
 
-      # - name: Upload SARIF result
-      #   uses: github/codeql-action/upload-sarif@v3
-      #   with:
-      #     sarif_file: sarif.output.json
-      
-      - name: Upload vulnerability report
+      - name: Upload SARIF result
         if: always()                        # Allows this step to run even if pipeline has to exit bcz 'critical' vulnerability has been found by docker scout in above step
-        uses: actions/upload-artifact@v4
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          name: docker-scout-report
-          path: vulns.report
+          sarif_file: sarif.output.json
+      
+      # - name: Upload vulnerability report
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: docker-scout-report
+      #     path: sarif.output.json
 
-      - name: Push image
-        run: |
-          docker push $IMAGE_NAME:$IMAGE_TAG
+      # - name: Push image
+      #   run: |
+      #     docker push $IMAGE_NAME:$IMAGE_TAG
