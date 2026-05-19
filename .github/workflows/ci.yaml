@@ -10,9 +10,11 @@ on:
       - '.gitignore'
 permissions:
   contents: read
+  security-events: write
 
 jobs:
-  secret-scans:
+
+  security-scan:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,10 +29,15 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      - name: Run Gitleaks
+      - name: Run Gitleaks for secret scan
         uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_GITHUB_TOKEN }}
+        # env:
+        #   GITHUB_TOKEN: ${{ secrets.REPO_GITHUB_TOKEN }}
+
+      - name: Run govulncheck for vulnerability scan
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
 
   linting:
     runs-on: ubuntu-latest
@@ -46,30 +53,71 @@ jobs:
 
       - name: Download dependencies
         run: go mod download
+      
+      - name: Build
+        run: go build ./...
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.56.2
 
-  vulerability-scan:
+  docker-image-pipepline:
+    needs: [security-scan] # If this job requires all above security scans to pass, better to put them in one job. If any could be avoided (like linting in this case, then put it in a separate job)
     runs-on: ubuntu-latest
 
+    env:
+      IMAGE_NAME: harshitrajsinha/socials
+      IMAGE_TAG: ${{ github.sha }}
+
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
-      - name: Setup Go 1.25
-        uses: actions/setup-go@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
         with:
-          go-version: '1.25'
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} # with block does not expand shell variable => requires env
+          load: true
+          push: false
+      
+      - name: Analyze for critical and high CVEs
+        uses: docker/scout-action@v1
+        with:
+          command: cves
+          image: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} # with block does not expand shell variable => requires env
+          only-severities: critical
+          exit-code: true
+          sarif-file: sarif.output.json
+          summary: true
 
-      - name: Download dependencies
-        run: go mod download
+      # Output will potentially be visible in repository's `security and quality` section
+      - name: Upload SARIF result
+        if: always()                        # Allows this step to run even if pipeline has to exit bcz 'critical' vulnerability has been found by docker scout in above step
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: sarif.output.json
+      
+      # Output will potentially be visible in github actions' this workflow's artifacts
+      - name: Upload vulnerability report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-scout-report
+          path: sarif.output.json
 
-      - name: Run govulncheck
+      - name: Push image
         run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
-          govulncheck ./...
-
-
+          docker push $IMAGE_NAME:$IMAGE_TAG
