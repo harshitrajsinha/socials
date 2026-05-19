@@ -16,7 +16,6 @@ func New() *fiber.App {
 			BodyLimit:    10 * 1024 * 1024,
 		})
 
-
 		app.Get("/health", func (c *fiber.Ctx) error {
 			return c.Status(fiber.StatusOK).JSON(fiber.Map{"response": "server is working"})
 		})
