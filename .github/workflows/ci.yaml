@@ -131,6 +131,6 @@ jobs:
           name: docker-scout-report
           path: vulns.report
 
-      # - name: Push image
-      #   run: |
-      #     docker push $IMAGE_NAME:$IMAGE_TAG
+      - name: Push image
+        run: |
+          docker push $IMAGE_NAME:$IMAGE_TAG
