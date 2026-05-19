@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-deploy
+  labels:
+    app: db-deploy
+  namespace: database
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: db-app
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: db-app
+    spec:
+      containers:
+      - name: db-container
+        image: postgres:14.23-alpine
+        ports:
+        - containerPort: 5432
+        env:
+          - name: POSTGRES_DB
+            valueFrom:
+              configMapKeyRef:
+                name: db-cmp
+                key: db-name
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: db-secrets
+                key: db-user
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: db-secrets
+                key: db-password
+

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: be-deploy
+  labels:
+    app: be-deploy
+  namespace: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: be-app
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: be-app
+    spec:
+      containers:
+      - name: be-container
+        image: harshitrajsinha/socials:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3015
+        env:
+          - name: DATABASE_DSN
+            valueFrom:
+              secretKeyRef:
+                name: be-secrets
+                key: backend-db-conn
+          - name: REDIS_URL
+            valueFrom:
+              secretKeyRef:
+                name: be-secrets
+                key: backend-redis-conn
+

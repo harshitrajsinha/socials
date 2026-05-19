@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: be-svc
+  namespace: backend
+spec:
+  selector:
+    app.kubernetes.io/name: be-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3015
+  type: ClusterIP
+
