@@ -103,19 +103,21 @@ jobs:
           sarif-file: sarif.output.json
           summary: true
 
+      # Output will potentially be visible in repository's `security and quality` section
       - name: Upload SARIF result
         if: always()                        # Allows this step to run even if pipeline has to exit bcz 'critical' vulnerability has been found by docker scout in above step
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: sarif.output.json
       
-      # - name: Upload vulnerability report
-      #   if: always()
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: docker-scout-report
-      #     path: sarif.output.json
+      # Output will potentially be visible in github actions' this workflow's artifacts
+      - name: Upload vulnerability report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-scout-report
+          path: sarif.output.json
 
-      # - name: Push image
-      #   run: |
-      #     docker push $IMAGE_NAME:$IMAGE_TAG
+      - name: Push image
+        run: |
+          docker push $IMAGE_NAME:$IMAGE_TAG
